@@ -1,0 +1,44 @@
+{
+  "name": "BoardMate Roadmap",
+  "body": "Kanban board para organizar el desarrollo de BoardMate en 4 semanas.",
+  "columns": [
+    {
+      "name": "Semana 1 — Setup",
+      "cards": [
+        "Crear repo en GitHub y configurar Vercel",
+        "Inicializar proyecto con Next.js (App Router)",
+        "Configurar TailwindCSS y shadcn/ui",
+        "Añadir Prisma y conectar con Postgres (Supabase/ElephantSQL)",
+        "Implementar NextAuth con Google"
+      ]
+    },
+    {
+      "name": "Semana 2 — Colección de juegos",
+      "cards": [
+        "Definir modelo Game en Prisma",
+        "CRUD básico de juegos (crear/editar/eliminar)",
+        "UI de colección de juegos con grid y filtros",
+        "Subida opcional de cover (Cloudinary o storage de Supabase)"
+      ]
+    },
+    {
+      "name": "Semana 3 — Partidas y recomendador",
+      "cards": [
+        "Definir modelos GameSession y GameResult en Prisma",
+        "Formulario para registrar partida y resultados",
+        "Página /night con filtros y recomendación automática",
+        "Ranking por juego y global"
+      ]
+    },
+    {
+      "name": "Semana 4 — Pulido y despliegue",
+      "cards": [
+        "Añadir estadísticas y gráficas (Recharts/Chart.js)",
+        "Implementar dark mode",
+        "Animaciones con Framer Motion",
+        "Escribir README completo",
+        "Deploy final en Vercel"
+      ]
+    }
+  ]
+}
