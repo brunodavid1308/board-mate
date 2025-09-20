@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  games     Game[]   @relation("UserGames")
+  sessions  GameSession[] @relation("UserSessions")
+  results   GameResult[] @relation("PlayerResults")
+}
+
+model Game {
+  id         String   @id @default(cuid())
+  name       String
+  coverUrl   String?
+  minPlayers Int
+  maxPlayers Int
+  duration   Int      // duración en minutos
+  difficulty String   // "Fácil", "Medio", "Difícil"
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  ownerId    String
+  owner      User     @relation("UserGames", fields: [ownerId], references: [id])
+  sessions   GameSession[]
+}
+
+model GameSession {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id])
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  results   GameResult[] @relation("SessionResults")
+  userId    String
+  user      User     @relation("UserSessions", fields: [userId], references: [id])
+}
+
+model GameResult {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   GameSession @relation("SessionResults", fields: [sessionId], references: [id])
+  playerId  String
+  player    User       @relation("PlayerResults", fields: [playerId], references: [id])
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
