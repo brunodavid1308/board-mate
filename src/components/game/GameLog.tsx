@@ -41,8 +41,9 @@ export function GameLog({ moves, onUndo, disabled = false }: GameLogProps) {
     }
   };
 
-  const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString("es-ES", {
+  const formatTime = (date: string | Date) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    return d.toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -135,4 +136,3 @@ export function GameLog({ moves, onUndo, disabled = false }: GameLogProps) {
     </Card>
   );
 }
-
