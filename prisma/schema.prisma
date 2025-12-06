@@ -6,61 +6,104 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  games     Game[]   @relation("UserGames")
-  sessions  GameSession[] @relation("UserSessions")
-  results   GameResult[] @relation("PlayerResults")
+// =============================================
+// 👥 PROFILES - Perfiles de Usuario
+// Almacena datos de usuarios autenticados (relacionado con auth.users de Supabase)
+// =============================================
+model Profile {
+  id        String   @id @db.Uuid // FK a auth.users de Supabase
+  username  String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relaciones
+  games Game[] @relation("CreatorGames")
+
+  @@map("profiles")
 }
 
+// =============================================
+// 🏷️ TEMPLATES - Plantillas de Puntuación
+// Define la lógica de puntuación para distintos juegos
+// =============================================
+model Template {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String  @unique
+  scoringSchema Json    @map("scoring_schema") @db.JsonB
+  isPublic      Boolean @default(true) @map("is_public")
+
+  // Relaciones
+  games Game[]
+
+  @@map("templates")
+}
+
+// =============================================
+// 🏁 GAMES - Partidas
+// Almacena los datos de cada partida
+// =============================================
 model Game {
-  id         String   @id @default(cuid())
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  isFinished Boolean  @default(false) @map("is_finished")
+
+  // Relaciones
+  creatorId  String   @map("creator_id") @db.Uuid
+  creator    Profile  @relation("CreatorGames", fields: [creatorId], references: [id])
+
+  templateId String   @map("template_id") @db.Uuid
+  template   Template @relation(fields: [templateId], references: [id])
+
+  winnerId   String?  @map("winner_id") @db.Uuid
+  winner     Player?  @relation("GameWinner", fields: [winnerId], references: [id])
+
+  players    Player[] @relation("GamePlayers")
+
+  @@map("games")
+}
+
+// =============================================
+// 🎲 PLAYERS - Jugadores
+// Participantes y su marcador en una partida específica
+// =============================================
+model Player {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
-  coverUrl   String?
-  minPlayers Int
-  maxPlayers Int
-  duration   Int      // duración en minutos
-  difficulty String   // "Fácil", "Medio", "Difícil"
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  ownerId    String
-  owner      User     @relation("UserGames", fields: [ownerId], references: [id])
-  sessions   GameSession[]
+  color      String
+  totalScore Int    @default(0) @map("total_score")
+
+  // Relaciones
+  gameId String @map("game_id") @db.Uuid
+  game   Game   @relation("GamePlayers", fields: [gameId], references: [id], onDelete: Cascade)
+
+  moves Move[]
+
+  // Partidas donde este jugador es el ganador
+  wonGames Game[] @relation("GameWinner")
+
+  @@map("players")
 }
 
-model GameSession {
-  id        String   @id @default(cuid())
-  gameId    String
-  game      Game     @relation(fields: [gameId], references: [id])
-  date      DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  results   GameResult[] @relation("SessionResults")
-  userId    String
-  user      User     @relation("UserSessions", fields: [userId], references: [id])
-}
+// =============================================
+// 📝 MOVES - Movimientos / Historial
+// Game Log para "Deshacer" y seguimiento de puntuación
+// =============================================
+model Move {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  pointsChange Int      @map("points_change")
+  reason       String
 
-model GameResult {
-  id        String   @id @default(cuid())
-  sessionId String
-  session   GameSession @relation("SessionResults", fields: [sessionId], references: [id])
-  playerId  String
-  player    User       @relation("PlayerResults", fields: [playerId], references: [id])
-  score     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Relaciones
+  playerId String @map("player_id") @db.Uuid
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("moves")
 }
